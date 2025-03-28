@@ -1,10 +1,11 @@
-use serde_json::{Result, Value};
+use serde_json::Value;
+use std::io::Write;
 use std::io::{BufRead, BufReader};
-use std::io::{Read, Write};
 use std::net::Shutdown;
 use std::net::{TcpListener, TcpStream};
-use std::str;
+use std::thread;
 
+// TODO: Works for single client, need to handle multiple connections
 fn main() {
     println!("Listening on port 8080");
     let listener = TcpListener::bind("0.0.0.0:8080").unwrap();
@@ -13,7 +14,9 @@ fn main() {
         println!("Starting connection");
         match stream {
             Ok(mut stream) => {
-                process_request(&mut stream);
+                thread::spawn(move || {
+                    process_request(&mut stream);
+                });
             }
             Err(err) => panic!("{}", err),
         }
