@@ -1,4 +1,4 @@
-use num_bigint::BigInt;
+use num_bigint::{BigInt, ParseBigIntError};
 use serde_json::Value;
 use std::io::Write;
 use std::io::{BufRead, BufReader};
@@ -73,11 +73,11 @@ fn process_request(stream: &mut TcpStream) {
                 let number = match BigInt::from_str(&num_str) {
                     Ok(val) => val,
                     Err(_) => {
-                        send_malformed(stream);
+                        let ret_value = format!("{{\"method\":\"isPrime\",\"prime\":{}}}\n", false);
+                        let _ = stream.write(ret_value.as_bytes());
                         return;
                     }
                 };
-                println!("number: {:?}", number);
                 let ret_value = format!(
                     "{{\"method\":\"isPrime\",\"prime\":{}}}\n",
                     is_prime(number)
