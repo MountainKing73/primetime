@@ -1,12 +1,12 @@
-use num_bigint::{BigInt, Sign::Plus};
+use num_bigint::BigInt;
 use serde_json::Value;
 use std::io::Write;
 use std::io::{BufRead, BufReader};
 use std::net::Shutdown;
 use std::net::{TcpListener, TcpStream};
+use std::str::FromStr;
 use std::thread;
 
-// TODO: Need to handle huge numbers
 fn main() {
     println!("Listening on port 8080");
     let listener = TcpListener::bind("0.0.0.0:8080").unwrap();
@@ -70,11 +70,14 @@ fn process_request(stream: &mut TcpStream) {
                 }
 
                 let num_str = v["number"].to_string();
-                let mut num_arr: Vec<u32> = vec![];
-                for c in num_str.chars() {
-                    num_arr.push(c.to_digit(10).unwrap());
-                }
-                let number = BigInt::from_slice(Plus, &num_arr[..]);
+                let number = match BigInt::from_str(&num_str) {
+                    Ok(val) => val,
+                    Err(_) => {
+                        send_malformed(stream);
+                        return;
+                    }
+                };
+                println!("number: {:?}", number);
                 let ret_value = format!(
                     "{{\"method\":\"isPrime\",\"prime\":{}}}\n",
                     is_prime(number)
