@@ -1,3 +1,4 @@
+use num_bigint::{BigInt, Sign::Plus};
 use serde_json::Value;
 use std::io::Write;
 use std::io::{BufRead, BufReader};
@@ -5,7 +6,7 @@ use std::net::Shutdown;
 use std::net::{TcpListener, TcpStream};
 use std::thread;
 
-// TODO: Works for single client, need to handle multiple connections
+// TODO: Need to handle huge numbers
 fn main() {
     println!("Listening on port 8080");
     let listener = TcpListener::bind("0.0.0.0:8080").unwrap();
@@ -23,14 +24,14 @@ fn main() {
     }
 }
 
-fn is_prime(n: i64) -> bool {
-    if n <= 1 {
+fn is_prime(n: BigInt) -> bool {
+    if n <= BigInt::from(1) {
         return false;
     }
 
-    let mut i = 2;
-    while i * i < (n + 1) {
-        if n % i == 0 {
+    let mut i = BigInt::from(2);
+    while &i * &i < (&n + BigInt::from(1)) {
+        if &n % &i == BigInt::from(0) {
             return false;
         }
         i += 1;
@@ -67,15 +68,16 @@ fn process_request(stream: &mut TcpStream) {
                     send_malformed(stream);
                     return;
                 }
-                let number = v["number"].as_i64();
-                if number.is_none() {
-                    println!("Invalid number: {:?}", v["number"]);
-                    send_malformed(stream);
-                    return;
+
+                let num_str = v["number"].to_string();
+                let mut num_arr: Vec<u32> = vec![];
+                for c in num_str.chars() {
+                    num_arr.push(c.to_digit(10).unwrap());
                 }
+                let number = BigInt::from_slice(Plus, &num_arr[..]);
                 let ret_value = format!(
                     "{{\"method\":\"isPrime\",\"prime\":{}}}\n",
-                    is_prime(number.unwrap())
+                    is_prime(number)
                 );
                 let _ = stream.write(ret_value.as_bytes());
             }
