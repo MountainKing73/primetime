@@ -7,3 +7,4 @@ edition = "2024"
 serde_json = { version = "1.0.140", features = ["arbitrary_precision"] }
 bytes = "1.10.1"
 num-bigint = "0.4.6"
+bigdecimal = "0.4.7"

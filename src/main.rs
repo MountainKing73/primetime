@@ -1,3 +1,4 @@
+use bigdecimal::BigDecimal;
 use num_bigint::{BigInt, ParseBigIntError};
 use serde_json::Value;
 use std::io::Write;
@@ -70,18 +71,23 @@ fn process_request(stream: &mut TcpStream) {
                 }
 
                 let num_str = v["number"].to_string();
-                let number = match BigInt::from_str(&num_str) {
+                let number = match BigDecimal::from_str(&num_str) {
                     Ok(val) => val,
                     Err(_) => {
-                        let ret_value = format!("{{\"method\":\"isPrime\",\"prime\":{}}}\n", false);
-                        let _ = stream.write(ret_value.as_bytes());
+                        send_malformed(stream);
                         return;
                     }
                 };
-                let ret_value = format!(
-                    "{{\"method\":\"isPrime\",\"prime\":{}}}\n",
-                    is_prime(number)
-                );
+
+                let ret_value: String = if number.fractional_digit_count() > 0 {
+                    format!("{{\"method\":\"isPrime\",\"prime\":{}}}\n", false)
+                } else {
+                    let numint = number.into_bigint_and_scale();
+                    format!(
+                        "{{\"method\":\"isPrime\",\"prime\":{}}}\n",
+                        is_prime(numint.0)
+                    )
+                };
                 let _ = stream.write(ret_value.as_bytes());
             }
             Err(err) => panic!("{}", err),
