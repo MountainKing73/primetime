@@ -4,6 +4,13 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+tokio = { version = "1.44.1", features = [
+  "io-util",
+  "macros",
+  "net",
+  "rt",
+  "rt-multi-thread",
+] }
 serde_json = { version = "1.0.140", features = ["arbitrary_precision"] }
 bytes = "1.10.1"
 num-bigint = "0.4.6"
